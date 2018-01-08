@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<meta charset="UTF-8" />
+<head>
+    <title>Home</title>
+    <script th:src="@{sockjs.min.js}"></script>
+    <script th:src="@{stomp.min.js}"></script>
+    <script th:src="@{jquery.js}"></script>
+</head>
+<body>
+<p>
+    聊天室2
+</p>
+
+<form id="wiselyForm">
+    <textarea rows="4" cols="60" name="text"></textarea>
+    <input type="submit"/>
+</form>
+
+<script th:inline="javascript">
+  	
+	var userName = [[${userName}]];
+
+    $('#wiselyForm').submit(function(e){
+        e.preventDefault();
+        var text = $('#wiselyForm').find('textarea[name="text"]').val();
+        sendSpittle(text);
+    });
+
+    console.log(userName);
+    
+    var sock = new SockJS("/test-springboot/endpointChat"); //1
+    var stomp = Stomp.over(sock);
+    stomp.connect(userName,userName, function(frame) {
+        stomp.subscribe("/user/wisely/queue/notifications", handleNotification);//2
+    });
+
+
+
+    function handleNotification(message) {
+    	 console.log(1);
+    	 console.log(message.body);
+        $('#output').append("<b>Received: " + message.body + "</b><br/>")
+    }
+
+    function sendSpittle(text) {
+        stomp.send("/chat", {}, text);//3
+    }
+    $('#stop').click(function() {sock.close()});
+    
+    
+/*     function connect() {
+        var socket = new SockJS('/test-springboot/endpointChat'); //1(包括应用名)，连接server socket
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, function(frame) {
+            stompClient.subscribe('/topic/getResponse', function(respnose){ 
+                console.log(JSON.parse(respnose.body).responseMessage);
+            });
+        });
+     }*/
+    
+</script>
+
+<div id="output"></div>
+</body>
+</html>
